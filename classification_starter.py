@@ -77,7 +77,7 @@ import numpy as np
 from scipy import sparse
 
 import util
-
+import regression
 
 def extract_feats(ffs, direc="train", global_feat_dict=None):
     """
@@ -245,7 +245,8 @@ def main():
     
     # TODO train here, and learn your classification parameters
     print "learning..."
-    learned_W = np.random.random((len(global_feat_dict),len(util.malware_classes)))
+    learned_model = regression.LogRegression(X_train, t_train)
+    # learned_W = np.random.random((len(global_feat_dict),len(util.malware_classes)))
     print "done learning"
     print
     
@@ -260,7 +261,8 @@ def main():
     
     # TODO make predictions on text data and write them out
     print "making predictions..."
-    preds = np.argmax(X_test.dot(learned_W),axis=1)
+    preds = regression.makePrediction(learned_model, X_test)
+    # preds = np.argmax(X_test.dot(learned_W),axis=1)
     print "done making predictions"
     print
     
