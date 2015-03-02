@@ -1,0 +1,5 @@
+*.csv
+*.pdf
+*.gz
+sample_predictions.csv
+practical2-classification.pdf
