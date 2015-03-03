@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 
 # Returns a model fitted to (X,y) using Logistic Regression
 def LogRegression(X, y):
@@ -13,6 +14,9 @@ def LogRegression(X, y):
   model = LogisticRegression(penalty="l2") # using L2 norm penalty
   return model.fit(X, y)
 
+def DecisionTree(X, y):
+  return DecisionTreeClassifier().fit(X.toarray(),y)
+
 # Returns models prediction as list on the data X
 def makePrediction(model, X):
   """
@@ -22,4 +26,4 @@ def makePrediction(model, X):
   return:
     a numpy array of class assignments/predictions to each datum in X
   """
-  return model.predict(X)
+  return model.predict(X.toarray())

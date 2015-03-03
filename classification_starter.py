@@ -245,7 +245,8 @@ def main():
     
     # TODO train here, and learn your classification parameters
     print "learning..."
-    learned_model = regression.LogRegression(X_train, t_train)
+    learned_model = regression.DecisionTree(X_train, t_train)
+    # learned_model = regression.LogRegression(X_train, t_train)
     # learned_W = np.random.random((len(global_feat_dict),len(util.malware_classes)))
     print "done learning"
     print
