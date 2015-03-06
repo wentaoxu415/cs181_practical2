@@ -67,6 +67,15 @@
 ## a streaming way. See http://eli.thegreenplace.net/2012/03/15/processing-xml-in-python-with-elementtree/
 ## for an example. 
 
+"""
+toarray or not toarray on make prediction
+
+DecisionTree:
+toarray
+"""
+
+
+
 import os
 from collections import Counter
 try:
@@ -79,7 +88,9 @@ from scipy import sparse
 import util
 import regression
 from sklearn import cross_validation, metrics, grid_search
-
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression, LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 
 
 learned_model = []
@@ -276,15 +287,43 @@ def cross_validate(data, target):
     global learned_model
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(data, target, test_size=0.4, random_state=0)
     learned_model = regression.DecisionTree(X_train, y_train)
-    y_pred = regression.makePrediction(learned_model, X_test)
     print "accuracy score", learned_model.score(X_test.toarray(), y_test)
-    #print "accuracy score", metrics.accuracy_score(y_test, y_pred)
-
-def grid_search(data, target):
-    parameters = {}
-    param_dim = {}
     
+def cross_validate(data, target):
+    global learned_model
+    accuracy = 0
+    k = 3
+
+    kf = cross_validation.KFold(len(X), k)
+    for train_idx, test_idx in kf:
+        X_train, X_test = X[train_idx], X[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+        learned_model = regression.DecisionTree(X_train, y_train)
+        accuracy += learned_model.score(X_test.toarray(), y_test)
+    accuracy /= k
+    print "accuracy score", accuracy
+
+def gridSearch(data, target):
+    global learned_model
+    
+    #SGD Parameters
+    #parameters = {'loss':('hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'), 'penalty':('l2','l1', 'elasticnet'), 'alpha':[x*0.01 for x in xrange(100)]}
+    #model = regression.SGD()
+    parameters = {'penalty':('l1', 'l2'),'C':[x/10 for x in xrange(10, 100)]}
+    model = LogisticRegression()
+    optimized_model = grid_search.GridSearchCV(model, parameters)
+    learned_model = optimized_model.fit(data, target)
+    print "accuracy score", learned_model.score(data)
+
+def randomSearch_Logistic(data, target):
+    global learned_model
+    parameters = {'penalty':('l1', 'l2'), 'C':[x/10 for x in xrange(10, 100)]}
+    model = LogisticRegression()
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=50)
+    learned_model = optimized_model.fit(data, target)
+    print "accuracy score", learned_model.score(data)    
 ## The following function does the feature extraction, learning, and prediction
+
 def main():
     train_dir = "train"
     test_dir = "test"
@@ -311,28 +350,29 @@ def main():
     #learned_model = regression.SGD_huber(X_train, t_train)
     #learned_model = regression.SGD_log(X_train, t_train)
     cross_validate(X_train, t_train)
+    #randomSearch_Logistic(X_train, t_train)
     print "done learning"
     print
     
-    # get rid of training data and load test data
-    del X_train
-    del t_train
-    del train_ids
-    print "extracting test features..."
-    X_test,_,t_ignore,test_ids = extract_feats(ffs, test_dir, global_feat_dict=global_feat_dict)
-    print "done extracting test features"
-    print
+    # # get rid of training data and load test data
+    # del X_train
+    # del t_train
+    # del train_ids
+    # print "extracting test features..."
+    # X_test,_,t_ignore,test_ids = extract_feats(ffs, test_dir, global_feat_dict=global_feat_dict)
+    # print "done extracting test features"
+    # print
     
-    # TODO make predictions on text data and write them out
-    print "making predictions..."
-    preds = regression.makePrediction(learned_model, X_test)
-    # preds = np.argmax(X_test.dot(learned_W),axis=1)
-    print "done making predictions"
-    print
+    # # TODO make predictions on text data and write them out
+    # print "making predictions..."
+    # preds = regression.makePrediction(learned_model, X_test)
+    # # preds = np.argmax(X_test.dot(learned_W),axis=1)
+    # print "done making predictions"
+    # print
     
-    print "writing predictions..."
-    util.write_predictions(preds, test_ids, outputfile)
-    print "done!"
+    # print "writing predictions..."
+    # util.write_predictions(preds, test_ids, outputfile)
+    # print "done!"
 
 if __name__ == "__main__":
     main()

@@ -29,6 +29,10 @@ def Percept(X, y):
   model = linear_model.Perceptron()
   return model.fit(X, y)
 
+def SGD():
+  model = linear_model.SGDClassifier(shuffle=True)
+  return model
+
 def SGD_hinge(X, y):
   model = linear_model.SGDClassifier(loss="hinge", penalty="l2", shuffle=True)
   return model.fit(X, y)
@@ -75,3 +79,6 @@ def makePrediction(model, X):
     a numpy array of class assignments/predictions to each datum in X
   """
   return model.predict(X)
+
+def DecisionPrediction(model, X):
+  return model.predict(X.toarray())
