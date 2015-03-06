@@ -87,9 +87,9 @@ from scipy import sparse
 
 import util
 import regression
-from sklearn import cross_validation, metrics, grid_search
+from sklearn import cross_validation, metrics, grid_search, svm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -283,25 +283,25 @@ def frac_major_tags_feats(tree):
 
     return c
 
-def cross_validate(data, target):
-    global learned_model
-    X_train, X_test, y_train, y_test = cross_validation.train_test_split(data, target, test_size=0.4, random_state=0)
-    learned_model = regression.DecisionTree(X_train, y_train)
-    print "accuracy score", learned_model.score(X_test.toarray(), y_test)
+# def cross_validate(data, target):
+#     global learned_model
+#     X_train, X_test, y_train, y_test = cross_validation.train_test_split(data, target, test_size=0.4, random_state=0)
+#     learned_model = regression.DecisionTree(X_train, y_train)
+#     print "accuracy score", learned_model.score(X_test.toarray(), y_test)
     
-def cross_validate(data, target):
-    global learned_model
-    accuracy = 0
-    k = 3
+# def cross_validate(data, target):
+#     global learned_model
+#     accuracy = 0
+#     k = 3
 
-    kf = cross_validation.KFold(len(X), k)
-    for train_idx, test_idx in kf:
-        X_train, X_test = X[train_idx], X[test_idx]
-        y_train, y_test = y[train_idx], y[test_idx]
-        learned_model = regression.DecisionTree(X_train, y_train)
-        accuracy += learned_model.score(X_test.toarray(), y_test)
-    accuracy /= k
-    print "accuracy score", accuracy
+#     kf = cross_validation.KFold(data.shape[0], k)
+#     for train_idx, test_idx in kf:
+#         X_train, X_test = data[train_idx], data[test_idx]
+#         y_train, y_test = target[train_idx], target[test_idx]
+#         learned_model = regression.DecisionTree(X_train, y_train)
+#         accuracy += learned_model.score(X_test.toarray(), y_test)
+#     accuracy /= k
+#     print "accuracy score", accuracy
 
 def gridSearch(data, target):
     global learned_model
@@ -309,20 +309,53 @@ def gridSearch(data, target):
     #SGD Parameters
     #parameters = {'loss':('hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'), 'penalty':('l2','l1', 'elasticnet'), 'alpha':[x*0.01 for x in xrange(100)]}
     #model = regression.SGD()
-    parameters = {'penalty':('l1', 'l2'),'C':[x/10 for x in xrange(10, 100)]}
+    parameters = {'penalty':('l1', 'l2')}
     model = LogisticRegression()
-    optimized_model = grid_search.GridSearchCV(model, parameters)
+    optimized_model = grid_search.GridSearchCV(model, param_grid = parameters)
     learned_model = optimized_model.fit(data, target)
-    print "accuracy score", learned_model.score(data)
+    print data
+    print "accuracy score", learned_model.score(data.toarray())
 
 def randomSearch_Logistic(data, target):
     global learned_model
     parameters = {'penalty':('l1', 'l2'), 'C':[x/10 for x in xrange(10, 100)]}
     model = LogisticRegression()
-    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=50)
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
     learned_model = optimized_model.fit(data, target)
-    print "accuracy score", learned_model.score(data)    
-## The following function does the feature extraction, learning, and prediction
+    print "accuracy score", learned_model.score(data.toarray())    
+
+def randomSearch_BayRidge(data, target):
+    global learned_model
+    parameters = {'lambda_1':[x/100 for x in xrange(1, 100)]}
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
+    learned_model = optimized_model.fit(data, target)
+    print "accuracy score", learned_model.score(data)
+
+def randomSearch_Decision(data, target):
+    global learned_model
+    parameters = {'max_features':('auto', 'log2', None)}
+    model = DecisionTreeClassifier()
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=3)
+    learned_model = optimized_model.fit(data.toarray(), target)
+    print learned_model
+    print data
+    print "accuracy score", learned_model.score(data.toarray())
+
+def randomSearch_SGD(data, target):
+    global learned_model
+    parameters = {'loss':('hinge', 'log', 'modified_huber', 'squared_hinge','perceptron')}
+    model = SGDClassifier()
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
+    learned_model = optimized_model.fit(data, target)
+    print "accuracy score", learned_model.score(data)
+
+def randomSearch_SVM(data, target):
+    global learned_model
+    parameters = {'kernel':('linear', 'polynomial', 'rbf', 'sigmoid')}
+    model = svm.SVC()
+    optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iters=5)
+    learned_model = optimized_model.fit(data)
+    print "accuracy score", learned_model.score(data)
 
 def main():
     train_dir = "train"
@@ -337,20 +370,18 @@ def main():
     print "done extracting training features"
     print
     
-
     # TODO train here, and learn your classification parameters
     print "learning..."
     
-    # learned_W = np.random.random((len(global_feat_dict),len(util.malware_classes)))
-    #learned_model = regression.LogRegression(X_train, t_train)
-    # learned_model = regression.DecisionTree(X_train, t_train)
-    #learned_model = regression.BayRidge(X_train, t_train)
-    #learned_model = regression.Percept(X_train, t_train)
-    #learned_model = regression.SGD_hinge(X_train, t_train)
-    #learned_model = regression.SGD_huber(X_train, t_train)
-    #learned_model = regression.SGD_log(X_train, t_train)
-    cross_validate(X_train, t_train)
-    #randomSearch_Logistic(X_train, t_train)
+    #cross_validate(X_train, t_train)
+    #gridSearch(X_train, t_train)
+    randomSearch_Logistic(X_train, t_train)
+    randomSearch_BayRidge(X_train, t_train)
+    randomSearch_Decision(X_train, t_train)
+    randomSearch_SGD(X_train, t_train)
+    randomSearch_
+
+    randomSearch_Decision(X_train, t_train)
     print "done learning"
     print
     
