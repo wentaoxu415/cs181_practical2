@@ -283,25 +283,28 @@ def frac_major_tags_feats(tree):
 
     return c
 
+
 # def cross_validate(data, target):
 #     global learned_model
 #     X_train, X_test, y_train, y_test = cross_validation.train_test_split(data, target, test_size=0.4, random_state=0)
 #     learned_model = regression.DecisionTree(X_train, y_train)
 #     print "accuracy score", learned_model.score(X_test.toarray(), y_test)
-    
-# def cross_validate(data, target):
-#     global learned_model
-#     accuracy = 0
-#     k = 3
+ 
 
-#     kf = cross_validation.KFold(data.shape[0], k)
-#     for train_idx, test_idx in kf:
-#         X_train, X_test = data[train_idx], data[test_idx]
-#         y_train, y_test = target[train_idx], target[test_idx]
-#         learned_model = regression.DecisionTree(X_train, y_train)
-#         accuracy += learned_model.score(X_test.toarray(), y_test)
-#     accuracy /= k
-#     print "accuracy score", accuracy
+def cross_validate(X, y):
+    global learned_model
+    accuracy = 0
+    k = 3
+
+    kf = cross_validation.KFold(X.shape[0], k)
+    for train_idx, test_idx in kf:
+        X_train, X_test = X[train_idx], X[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+        learned_model = regression.DecisionTree(X_train, y_train)
+        accuracy += learned_model.score(X_test, y_test)
+    accuracy /= k
+    print "accuracy score", accuracy
+
 
 def gridSearch(data, target):
     global learned_model
@@ -379,31 +382,30 @@ def main():
     randomSearch_BayRidge(X_train, t_train)
     randomSearch_Decision(X_train, t_train)
     randomSearch_SGD(X_train, t_train)
-    randomSearch_
+    randomSearch_SVM(X_train, t_train)
 
-    randomSearch_Decision(X_train, t_train)
     print "done learning"
     print
     
-    # # get rid of training data and load test data
-    # del X_train
-    # del t_train
-    # del train_ids
-    # print "extracting test features..."
-    # X_test,_,t_ignore,test_ids = extract_feats(ffs, test_dir, global_feat_dict=global_feat_dict)
-    # print "done extracting test features"
-    # print
+    # get rid of training data and load test data
+    del X_train
+    del t_train
+    del train_ids
+    print "extracting test features..."
+    X_test,_,t_ignore,test_ids = extract_feats(ffs, test_dir, global_feat_dict=global_feat_dict)
+    print "done extracting test features"
+    print
     
-    # # TODO make predictions on text data and write them out
-    # print "making predictions..."
-    # preds = regression.makePrediction(learned_model, X_test)
-    # # preds = np.argmax(X_test.dot(learned_W),axis=1)
-    # print "done making predictions"
-    # print
+    # TODO make predictions on text data and write them out
+    print "making predictions..."
+    preds = learned_model.makePrediction(X_test)
+    # preds = np.argmax(X_test.dot(learned_W),axis=1)
+    print "done making predictions"
+    print
     
-    # print "writing predictions..."
-    # util.write_predictions(preds, test_ids, outputfile)
-    # print "done!"
+    print "writing predictions..."
+    util.write_predictions(preds, test_ids, outputfile)
+    print "done!"
 
 if __name__ == "__main__":
     main()

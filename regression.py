@@ -5,29 +5,40 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 
-# Returns a model fitted to (X,y) using Logistic Regression
-def LogRegression(X, y):
-  """
-  input: 
-    X is the design matrix
-    y = training output (i.e. t_train)
-  return: 
-    LogisticRegression object that is fitted to the data
-  """
-  model = LogisticRegression(penalty="l2") # using L2 norm penalty
-  
-  return model.fit(X, y)
+class RegressionModel:
+  def __init__(self, X, y, reg):
+    self.model = reg.fit(X, y)
 
-def DecisionTree(X, y):
-  return DecisionTreeClassifier().fit(X.toarray(),y)
+  def makePrediction(X_test):
+    return self.model.predict(X_test)
 
-def BayRidge(X, y):
-  model = linear_model.BayesianRidge()
-  return model.fit(X.toarray(), y)
+  def score(self, X, y):
+    return self.model.score(X, y)
 
-def Percept(X, y):
-  model = linear_model.Perceptron()
-  return model.fit(X, y)
+class LogRegression(RegressionModel):
+  def __init__(self, X, y):
+    RegressionModel.__init__(self, X, y, LogisticRegression(penalty="l2"))
+
+class DecisionTree(RegressionModel):
+  def __init__(self, X, y):
+    self.model = DecisionTreeClassifier().fit(X.toarray(), y)
+
+  def makePrediction(self, X):
+    return self.model.predict(X.toarray())
+
+  def score(self, X, y):
+    return self.model.score(X.toarray(), y)
+
+class BayRidge(RegressionModel):
+  def __init__(self, X, y):
+    self.model = linear_model.BayesianRidge().fit(X.toarray(), y)
+
+  def makePrediction(self, X_test):
+    return self.model.predict(X.toarray())
+
+class Percept(RegressionModel):
+  def __init__(self, X, y):
+    self.model = linear_model.Perceptron().fit(X, y)
 
 def SGD():
   model = linear_model.SGDClassifier(shuffle=True)
@@ -68,17 +79,17 @@ def SVM_sigmoid(X, y):
 def SVM_Linear_One_v_All(X, y):
   model = svm.LinearSVC()
   return model.fit(X, y)
+  
 # Returns models prediction as list on the data X
+# def makePrediction(model, X):
+#   """
+#   args:
+#     model = a sklearn 'regression' object that is fitted to data
+#     X = test data to make predictions on
+#   return:
+#     a numpy array of class assignments/predictions to each datum in X
+#   """
+#   return model.predict(X)
 
-def makePrediction(model, X):
-  """
-  args:
-    model = a sklearn 'regression' object that is fitted to data
-    X = test data to make predictions on
-  return:
-    a numpy array of class assignments/predictions to each datum in X
-  """
-  return model.predict(X)
-
-def DecisionPrediction(model, X):
-  return model.predict(X.toarray())
+# def DecisionPrediction(model, X):
+#   return model.predict(X.toarray())
