@@ -78,6 +78,11 @@ from scipy import sparse
 
 import util
 import regression
+from sklearn import cross_validation, metrics, grid_search
+
+
+
+learned_model = []
 
 def extract_feats(ffs, direc="train", global_feat_dict=None):
     """
@@ -110,6 +115,8 @@ def extract_feats(ffs, direc="train", global_feat_dict=None):
         except ValueError:
             # we should only fail to find the label in our list of malware classes
             # if this is test data, which always has an "X" label
+            if clazz == "DS_Store":
+                continue
             assert clazz == "X"
             classes.append(-1)
         rowfd = {}
@@ -121,7 +128,6 @@ def extract_feats(ffs, direc="train", global_feat_dict=None):
         
     X,feat_dict = make_design_mat(fds,global_feat_dict)
     return X, feat_dict, np.array(classes), ids
-
 
 def make_design_mat(fds, global_feat_dict=None):
     """
@@ -228,6 +234,56 @@ def system_call_count_feats(tree):
             c['num_system_calls'] += 1
     return c
 
+def frac_major_tags_feats(tree):
+    """
+    arguments:
+      tree is an xml.etree.ElementTree object
+    returns:
+      a dictionary mapping 'num_system_calls' to the number of system_calls
+      made by an executable (summed over all processes)
+    """
+    c = Counter()
+    c['load_dll'] = 0
+    c['query_value'] = 0
+    c['open_key'] = 0
+    c['create_mutex'] = 0
+    c['create_window'] = 0
+    c['open_process'] = 0
+    c['create_thread'] = 0
+    c['sleep'] = 0
+    c['open_file'] = 0
+    c['vm_protect'] = 0
+    c['impersonate_user'] = 0
+    c['dump_line'] = 0
+    c['get_file_attributes'] = 0
+    c['vm_allocate'] = 0
+    total = 0
+
+    in_all_section = False
+    for el in tree.iter():
+        # ignore everything outside the "all_section" element
+        if el.tag == "all_section" and not in_all_section:
+            in_all_section = True
+        elif el.tag == "all_section" and in_all_section:
+            in_all_section = False
+        elif in_all_section and el.tag in c:
+            c[el.tag] += 1
+        total += 1
+
+    return c
+
+def cross_validate(data, target):
+    global learned_model
+    X_train, X_test, y_train, y_test = cross_validation.train_test_split(data, target, test_size=0.4, random_state=0)
+    learned_model = regression.DecisionTree(X_train, y_train)
+    y_pred = regression.makePrediction(learned_model, X_test)
+    print "accuracy score", learned_model.score(X_test.toarray(), y_test)
+    #print "accuracy score", metrics.accuracy_score(y_test, y_pred)
+
+def grid_search(data, target):
+    parameters = {}
+    param_dim = {}
+    
 ## The following function does the feature extraction, learning, and prediction
 def main():
     train_dir = "train"
@@ -235,19 +291,26 @@ def main():
     outputfile = "mypredictions.csv"  # feel free to change this or take it as an argument
     
     # TODO put the names of the feature functions you've defined above in this list
-    ffs = [first_last_system_call_feats, system_call_count_feats]
-    
+    ffs = [first_last_system_call_feats, system_call_count_feats, frac_major_tags_feats]
     # extract features
     print "extracting training features..."
     X_train,global_feat_dict,t_train,train_ids = extract_feats(ffs, train_dir)
     print "done extracting training features"
     print
     
+
     # TODO train here, and learn your classification parameters
     print "learning..."
-    learned_model = regression.DecisionTree(X_train, t_train)
-    # learned_model = regression.LogRegression(X_train, t_train)
+    
     # learned_W = np.random.random((len(global_feat_dict),len(util.malware_classes)))
+    #learned_model = regression.LogRegression(X_train, t_train)
+    # learned_model = regression.DecisionTree(X_train, t_train)
+    #learned_model = regression.BayRidge(X_train, t_train)
+    #learned_model = regression.Percept(X_train, t_train)
+    #learned_model = regression.SGD_hinge(X_train, t_train)
+    #learned_model = regression.SGD_huber(X_train, t_train)
+    #learned_model = regression.SGD_log(X_train, t_train)
+    cross_validate(X_train, t_train)
     print "done learning"
     print
     
