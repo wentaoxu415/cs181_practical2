@@ -89,7 +89,7 @@ import util
 import regression
 from sklearn import cross_validation, metrics, grid_search, svm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, SGDClassifier, BayesianRidge()
+from sklearn.linear_model import LogisticRegression, SGDClassifier, BayesianRidge
 from sklearn.tree import DecisionTreeClassifier
 
 
