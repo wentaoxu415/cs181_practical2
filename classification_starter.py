@@ -89,7 +89,7 @@ import util
 import regression
 from sklearn import cross_validation, metrics, grid_search, svm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier, BayesianRidge()
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -325,14 +325,15 @@ def randomSearch_Logistic(data, target):
     model = LogisticRegression()
     optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
     learned_model = optimized_model.fit(data, target)
-    print "accuracy score", learned_model.score(data.toarray())    
+    print "accuracy score", learned_model.score(data.toarray(), target)    
 
 def randomSearch_BayRidge(data, target):
     global learned_model
     parameters = {'lambda_1':[x/100 for x in xrange(1, 100)]}
+    model = BayesianRidge()
     optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
     learned_model = optimized_model.fit(data, target)
-    print "accuracy score", learned_model.score(data)
+    print "accuracy score", learned_model.score(data, target)
 
 def randomSearch_Decision(data, target):
     global learned_model
@@ -340,9 +341,7 @@ def randomSearch_Decision(data, target):
     model = DecisionTreeClassifier()
     optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=3)
     learned_model = optimized_model.fit(data.toarray(), target)
-    print learned_model
-    print data
-    print "accuracy score", learned_model.score(data.toarray())
+    print "accuracy score", learned_model.score(data.toarray(), target)
 
 def randomSearch_SGD(data, target):
     global learned_model
@@ -350,7 +349,7 @@ def randomSearch_SGD(data, target):
     model = SGDClassifier()
     optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iter=5)
     learned_model = optimized_model.fit(data, target)
-    print "accuracy score", learned_model.score(data)
+    print "accuracy score", learned_model.score(data, target)
 
 def randomSearch_SVM(data, target):
     global learned_model
@@ -358,7 +357,7 @@ def randomSearch_SVM(data, target):
     model = svm.SVC()
     optimized_model = grid_search.RandomizedSearchCV(model, param_distributions=parameters, n_iters=5)
     learned_model = optimized_model.fit(data)
-    print "accuracy score", learned_model.score(data)
+    print "accuracy score", learned_model.score(data, target)
 
 def main():
     train_dir = "train"
@@ -379,10 +378,15 @@ def main():
     #cross_validate(X_train, t_train)
     #gridSearch(X_train, t_train)
     randomSearch_Logistic(X_train, t_train)
+    print "Finished Logistic"
     randomSearch_BayRidge(X_train, t_train)
+    print "Finished Bay Ridge"
     randomSearch_Decision(X_train, t_train)
+    print "Finished Decision"
     randomSearch_SGD(X_train, t_train)
+    print "Finished SGD"
     randomSearch_SVM(X_train, t_train)
+    print "Finished SVM"
 
     print "done learning"
     print
